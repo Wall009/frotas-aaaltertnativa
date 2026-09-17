@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarDays, ListFilter, Plus } from "lucide-react";
+import { CalendarDays, ListFilter, Plus, CalendarRange } from "lucide-react";
 import { AgendaForm } from "@/components/agenda-form";
 import { DataPage, type DataColumn } from "@/components/data-page";
 import { PageHeader } from "@/components/page-header";
@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VencimentoForm } from "@/components/vencimento-form";
+import { VencimentosCalendar } from "@/components/vencimentos-calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate, situacaoVencimento, SITUACAO_LABEL } from "@/lib/format";
 import type { Row } from "@/lib/db";
@@ -19,5 +20,5 @@ function DeadlinesPage() {
   const deadlineCols = useMemo<DataColumn<Row<"vencimentos">>[]>(() => [{ label: "Veículo", value: r => r.veiculo_id ? data?.plates.get(r.veiculo_id) ?? "—" : "—" }, { label: "Tipo", value: r => r.descricao || r.tipo_codigo || "—" }, { label: "Vencimento", value: r => formatDate(r.data_vencimento) }, { label: "Responsável", value: r => r.responsavel || "—" }, { label: "Situação", value: r => <StatusBadge value={SITUACAO_LABEL[situacaoVencimento(r.data_vencimento, r.status)]} /> }], [data]);
   const agendaCols = useMemo<DataColumn<Row<"agenda_eventos">>[]>(() => [{ label: "Data", value: r => formatDate(r.data) }, { label: "Hora", value: r => r.hora?.slice(0,5) || "—" }, { label: "Atividade", value: r => r.titulo || r.atividade }, { label: "Veículo", value: r => r.veiculo_id ? data?.plates.get(r.veiculo_id) ?? "—" : "—" }, { label: "Responsável", value: r => r.responsavel || "—" }, { label: "Status", value: r => <StatusBadge value={r.status} /> }], [data]);
   const vehicles = data?.vehicles ?? [];
-  return <><PageHeader title="Vencimentos e Agenda" description="Controle de prazos e compromissos operacionais." /><Tabs defaultValue="vencimentos"><TabsList><TabsTrigger value="vencimentos"><ListFilter className="mr-2 size-4" />Vencimentos</TabsTrigger><TabsTrigger value="agenda"><CalendarDays className="mr-2 size-4" />Agenda</TabsTrigger></TabsList><TabsContent value="vencimentos"><DataPage rows={data?.vencimentos ?? []} columns={deadlineCols} actions={<VencimentoForm vehicles={vehicles} trigger={<Button size="sm"><Plus className="mr-2 size-4" />Novo vencimento</Button>} />} /></TabsContent><TabsContent value="agenda"><DataPage rows={data?.agenda ?? []} columns={agendaCols} actions={<AgendaForm vehicles={vehicles} trigger={<Button size="sm"><Plus className="mr-2 size-4" />Novo evento</Button>} />} /></TabsContent></Tabs></>;
+  return <><PageHeader title="Vencimentos e Agenda" description="Controle de prazos e compromissos operacionais." /><Tabs defaultValue="calendario"><TabsList><TabsTrigger value="calendario"><CalendarRange className="mr-2 size-4" />Calendário</TabsTrigger><TabsTrigger value="vencimentos"><ListFilter className="mr-2 size-4" />Vencimentos</TabsTrigger><TabsTrigger value="agenda"><CalendarDays className="mr-2 size-4" />Agenda</TabsTrigger></TabsList><TabsContent value="calendario"><VencimentosCalendar vencimentos={data?.vencimentos ?? []} plates={data?.plates ?? new Map()} /></TabsContent><TabsContent value="vencimentos"><DataPage rows={data?.vencimentos ?? []} columns={deadlineCols} actions={<VencimentoForm vehicles={vehicles} trigger={<Button size="sm"><Plus className="mr-2 size-4" />Novo vencimento</Button>} />} /></TabsContent><TabsContent value="agenda"><DataPage rows={data?.agenda ?? []} columns={agendaCols} actions={<AgendaForm vehicles={vehicles} trigger={<Button size="sm"><Plus className="mr-2 size-4" />Novo evento</Button>} />} /></TabsContent></Tabs></>;
 }
