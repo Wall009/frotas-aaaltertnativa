@@ -4,7 +4,6 @@ import {
   CircleDollarSign,
   CarFront,
   ChartNoAxesCombined,
-  ClipboardList,
   FileText,
   Gauge,
   Settings,
@@ -45,13 +44,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
         <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-            <ClipboardList className="size-5" />
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white p-1.5 shadow-sm">
+            <img src="/aa-mark.png" alt="AA Alternativa" className="size-full object-contain" />
           </span>
           {!collapsed && (
             <span className="min-w-0">
               <strong className="block truncate text-sm text-sidebar-accent-foreground">Controle de Frota</strong>
-              <span className="block truncate text-xs text-sidebar-foreground/60">Gestão operacional</span>
+              <span className="block truncate text-xs text-sidebar-foreground/60">AA Alternativa</span>
             </span>
           )}
         </Link>
