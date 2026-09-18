@@ -337,6 +337,303 @@ export type Database = {
           },
         ]
       }
+      motoristas: {
+        Row: {
+          ativo: boolean
+          categoria_cnh: string | null
+          cnh: string | null
+          cpf: string | null
+          created_at: string
+          id: string
+          nome: string
+          observacoes: string | null
+          updated_at: string
+          validade_cnh: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_cnh?: string | null
+          cnh?: string | null
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          updated_at?: string
+          validade_cnh?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          categoria_cnh?: string | null
+          cnh?: string | null
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          updated_at?: string
+          validade_cnh?: string | null
+        }
+        Relationships: []
+      }
+      multas: {
+        Row: {
+          codigo_infracao: string | null
+          created_at: string
+          data_identificacao: string | null
+          data_indicacao: string | null
+          data_infracao: string | null
+          data_vencimento: string | null
+          descricao_infracao: string | null
+          enquadramento: string | null
+          gravidade: string | null
+          hora_infracao: string | null
+          id: string
+          km: string | null
+          local: string | null
+          motorista_id: string | null
+          municipio: string | null
+          numero_auto: string | null
+          observacoes: string | null
+          orgao_autuador: string | null
+          pontos: number | null
+          prazo_indicacao: string | null
+          protocolo_indicacao: string | null
+          responsavel_indicacao: string | null
+          rodovia: string | null
+          sentido: string | null
+          situacao_condutor: string
+          status: string
+          uf: string | null
+          updated_at: string
+          valor_atualizado: number | null
+          valor_original: number | null
+          veiculo_id: string | null
+        }
+        Insert: {
+          codigo_infracao?: string | null
+          created_at?: string
+          data_identificacao?: string | null
+          data_indicacao?: string | null
+          data_infracao?: string | null
+          data_vencimento?: string | null
+          descricao_infracao?: string | null
+          enquadramento?: string | null
+          gravidade?: string | null
+          hora_infracao?: string | null
+          id?: string
+          km?: string | null
+          local?: string | null
+          motorista_id?: string | null
+          municipio?: string | null
+          numero_auto?: string | null
+          observacoes?: string | null
+          orgao_autuador?: string | null
+          pontos?: number | null
+          prazo_indicacao?: string | null
+          protocolo_indicacao?: string | null
+          responsavel_indicacao?: string | null
+          rodovia?: string | null
+          sentido?: string | null
+          situacao_condutor?: string
+          status?: string
+          uf?: string | null
+          updated_at?: string
+          valor_atualizado?: number | null
+          valor_original?: number | null
+          veiculo_id?: string | null
+        }
+        Update: {
+          codigo_infracao?: string | null
+          created_at?: string
+          data_identificacao?: string | null
+          data_indicacao?: string | null
+          data_infracao?: string | null
+          data_vencimento?: string | null
+          descricao_infracao?: string | null
+          enquadramento?: string | null
+          gravidade?: string | null
+          hora_infracao?: string | null
+          id?: string
+          km?: string | null
+          local?: string | null
+          motorista_id?: string | null
+          municipio?: string | null
+          numero_auto?: string | null
+          observacoes?: string | null
+          orgao_autuador?: string | null
+          pontos?: number | null
+          prazo_indicacao?: string | null
+          protocolo_indicacao?: string | null
+          responsavel_indicacao?: string | null
+          rodovia?: string | null
+          sentido?: string | null
+          situacao_condutor?: string
+          status?: string
+          uf?: string | null
+          updated_at?: string
+          valor_atualizado?: number | null
+          valor_original?: number | null
+          veiculo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multas_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "multas_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      multa_pagamentos: {
+        Row: {
+          created_at: string
+          data_pagamento: string | null
+          desconto: number | null
+          forma_pagamento: string | null
+          id: string
+          multa_id: string
+          observacao: string | null
+          responsavel: string | null
+          valor_original: number | null
+          valor_pago: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_pagamento?: string | null
+          desconto?: number | null
+          forma_pagamento?: string | null
+          id?: string
+          multa_id: string
+          observacao?: string | null
+          responsavel?: string | null
+          valor_original?: number | null
+          valor_pago?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_pagamento?: string | null
+          desconto?: number | null
+          forma_pagamento?: string | null
+          id?: string
+          multa_id?: string
+          observacao?: string | null
+          responsavel?: string | null
+          valor_original?: number | null
+          valor_pago?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multa_pagamentos_multa_id_fkey"
+            columns: ["multa_id"]
+            isOneToOne: false
+            referencedRelation: "multas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      multa_recursos: {
+        Row: {
+          created_at: string
+          data_decisao: string | null
+          data_protocolo: string | null
+          id: string
+          multa_id: string
+          numero_protocolo: string | null
+          orgao: string | null
+          prazo: string | null
+          resultado: string | null
+          responsavel: string | null
+          status: string
+          tipo_recurso: string | null
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_decisao?: string | null
+          data_protocolo?: string | null
+          id?: string
+          multa_id: string
+          numero_protocolo?: string | null
+          orgao?: string | null
+          prazo?: string | null
+          resultado?: string | null
+          responsavel?: string | null
+          status?: string
+          tipo_recurso?: string | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_decisao?: string | null
+          data_protocolo?: string | null
+          id?: string
+          multa_id?: string
+          numero_protocolo?: string | null
+          orgao?: string | null
+          prazo?: string | null
+          resultado?: string | null
+          responsavel?: string | null
+          status?: string
+          tipo_recurso?: string | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multa_recursos_multa_id_fkey"
+            columns: ["multa_id"]
+            isOneToOne: false
+            referencedRelation: "multas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      multa_timeline: {
+        Row: {
+          created_at: string
+          detalhe: string | null
+          evento: string
+          id: string
+          multa_id: string
+          usuario: string | null
+        }
+        Insert: {
+          created_at?: string
+          detalhe?: string | null
+          evento: string
+          id?: string
+          multa_id: string
+          usuario?: string | null
+        }
+        Update: {
+          created_at?: string
+          detalhe?: string | null
+          evento?: string
+          id?: string
+          multa_id?: string
+          usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multa_timeline_multa_id_fkey"
+            columns: ["multa_id"]
+            isOneToOne: false
+            referencedRelation: "multas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parametros: {
         Row: {
           chave: string
@@ -378,6 +675,39 @@ export type Database = {
           email?: string | null
           id?: string
           nome?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      responsaveis: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          setor: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome: string
+          setor?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          setor?: string | null
+          telefone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -619,6 +949,7 @@ export type Database = {
           marca_modelo: string | null
           modelo: string | null
           motor: string | null
+          motivo_venda: string | null
           observacoes: string | null
           placa: string
           proprietario: string | null
@@ -657,6 +988,7 @@ export type Database = {
           marca_modelo?: string | null
           modelo?: string | null
           motor?: string | null
+          motivo_venda?: string | null
           observacoes?: string | null
           placa: string
           proprietario?: string | null
@@ -695,6 +1027,7 @@ export type Database = {
           marca_modelo?: string | null
           modelo?: string | null
           motor?: string | null
+          motivo_venda?: string | null
           observacoes?: string | null
           placa?: string
           proprietario?: string | null
