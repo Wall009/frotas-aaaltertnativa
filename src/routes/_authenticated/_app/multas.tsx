@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/_app/multas")({ head: () =
 function FinesPage() {
   const navigate = useNavigate();
   const { data = [], isLoading } = useQuery({ queryKey: ["multas"], queryFn: async () => { const r = await supabase.from("multas").select("*, veiculos(placa)").order("data_infracao", { ascending: false }); if (r.error) throw r.error; return (r.data ?? []) as MultaRow[]; } });
-  const { data: vehicles = [] } = useQuery({ queryKey: ["veiculos-lite"], queryFn: async () => { const r = await supabase.from("veiculos").select("id, placa").order("placa"); if (r.error) throw r.error; return r.data ?? []; } });
+  const { data: vehicles = [] } = useQuery({ queryKey: ["veiculos-lite"], queryFn: async () => { const r = await supabase.from("veiculos").select("id, placa").neq("status", "VENDIDO").order("placa"); if (r.error) throw r.error; return r.data ?? []; } });
 
   const pendentes = useMemo(() => data.filter(m => !["PAGA", "ENCERRADA", "CANCELADA"].includes(m.status)), [data]);
   const indicacao = useMemo(() => data.filter(m => m.situacao_condutor === "AGUARDANDO_INDICACAO" && !["ENCERRADA", "CANCELADA"].includes(m.status)), [data]);
