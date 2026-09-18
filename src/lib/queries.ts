@@ -2,35 +2,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { DIAS_ALERTA_PADRAO } from "@/lib/format";
 
 export async function fetchDashboard() {
-  const [veiculos, vencimentos, agenda, sinistros, manutencoes, agendaCount, sinistrosCount, manutencoesCount, anexosCount, multasPendentes, multasIndicacao, multasPagamento, multasRecurso, multasEncerradas] = await Promise.all([
+  const [veiculosAll, vencimentos, agenda, sinistrosList, manutencoesList, multasList, anexosCount] = await Promise.all([
     supabase.from("veiculos").select("id, placa, marca_modelo, status"),
     supabase.from("vencimentos").select("id, veiculo_id, tipo_codigo, descricao, data_vencimento, status").order("data_vencimento", { ascending: true }),
-    supabase.from("agenda_eventos").select("id, veiculo_id, atividade, titulo, data, hora, status").order("data", { ascending: true }).limit(8),
-    supabase.from("sinistros").select("id, veiculo_id, data, tipo, status, local").order("data", { ascending: false }).limit(8),
-    supabase.from("manutencoes").select("id, veiculo_id, tipo, problema, previsao_saida, status, oficina").order("created_at", { ascending: false }).limit(8),
-    supabase.from("agenda_eventos").select("id", { count: "exact", head: true }).eq("status", "AGENDADO"),
-    supabase.from("sinistros").select("id", { count: "exact", head: true }).not("status", "ilike", "%conclu%"),
-    supabase.from("manutencoes").select("id", { count: "exact", head: true }).not("status", "ilike", "%conclu%"),
+    supabase.from("agenda_eventos").select("id, veiculo_id, atividade, titulo, data, hora, status").eq("status", "AGENDADO").order("data", { ascending: true }),
+    supabase.from("sinistros").select("id, veiculo_id, data, tipo, status, local").order("data", { ascending: false }),
+    supabase.from("manutencoes").select("id, veiculo_id, tipo, problema, previsao_saida, status, oficina").order("created_at", { ascending: false }),
+    supabase.from("multas").select("id, veiculo_id, status, situacao_condutor"),
     supabase.from("anexos").select("id", { count: "exact", head: true }),
-    supabase.from("multas").select("id", { count: "exact", head: true }).not("status", "in", "(PAGA,ENCERRADA,CANCELADA)"),
-    supabase.from("multas").select("id", { count: "exact", head: true }).eq("situacao_condutor", "AGUARDANDO_INDICACAO").not("status", "in", "(ENCERRADA,CANCELADA)"),
-    supabase.from("multas").select("id", { count: "exact", head: true }).eq("status", "AGUARDANDO_PAGAMENTO"),
-    supabase.from("multas").select("id", { count: "exact", head: true }).eq("status", "EM_RECURSO"),
-    supabase.from("multas").select("id", { count: "exact", head: true }).eq("status", "ENCERRADA"),
   ]);
-  const error = [veiculos.error, vencimentos.error, agenda.error, sinistros.error, manutencoes.error, agendaCount.error, sinistrosCount.error, manutencoesCount.error, anexosCount.error, multasPendentes.error, multasIndicacao.error, multasPagamento.error, multasRecurso.error, multasEncerradas.error].find(Boolean); if (error) throw error;
+  const error = [veiculosAll.error, vencimentos.error, agenda.error, sinistrosList.error, manutencoesList.error, multasList.error, anexosCount.error].find(Boolean); if (error) throw error;
+
+  const activeIds = new Set((veiculosAll.data ?? []).filter(v => v.status !== "VENDIDO").map(v => v.id));
+  const veiculosAtivos = (veiculosAll.data ?? []).filter(v => v.status !== "VENDIDO");
+  const isAtivoOuLivre = (veiculoId: string | null) => veiculoId === null || activeIds.has(veiculoId);
+
+  const vencimentosAtivos = (vencimentos.data ?? []).filter(r => isAtivoOuLivre(r.veiculo_id));
+  const sinistrosAtivos = (sinistrosList.data ?? []).filter(r => isAtivoOuLivre(r.veiculo_id));
+  const manutencoesAtivas = (manutencoesList.data ?? []).filter(r => isAtivoOuLivre(r.veiculo_id));
+  const multasAtivas = (multasList.data ?? []).filter(r => isAtivoOuLivre(r.veiculo_id));
+  const agendaAtiva = (agenda.data ?? []).filter(r => isAtivoOuLivre(r.veiculo_id));
+
   return {
-    veiculos: veiculos.data ?? [], vencimentos: vencimentos.data ?? [], agenda: agenda.data ?? [], sinistros: sinistros.data ?? [], manutencoes: manutencoes.data ?? [],
+    veiculos: veiculosAtivos,
+    vencimentos: vencimentosAtivos,
+    agenda: agendaAtiva.slice(0, 8),
+    sinistros: sinistrosAtivos.slice(0, 8),
+    manutencoes: manutencoesAtivas.slice(0, 8),
     counts: {
-      agendaAgendada: agendaCount.count ?? 0,
-      sinistrosEmAndamento: sinistrosCount.count ?? 0,
-      manutencoesEmAndamento: manutencoesCount.count ?? 0,
+      agendaAgendada: agendaAtiva.length,
+      sinistrosEmAndamento: sinistrosAtivos.filter(r => !r.status.toUpperCase().includes("CONCLU")).length,
+      manutencoesEmAndamento: manutencoesAtivas.filter(r => !r.status.toUpperCase().includes("CONCLU")).length,
       anexos: anexosCount.count ?? 0,
-      multasPendentes: multasPendentes.count ?? 0,
-      multasIndicacao: multasIndicacao.count ?? 0,
-      multasPagamento: multasPagamento.count ?? 0,
-      multasRecurso: multasRecurso.count ?? 0,
-      multasEncerradas: multasEncerradas.count ?? 0,
+      multasPendentes: multasAtivas.filter(r => !["PAGA", "ENCERRADA", "CANCELADA"].includes(r.status)).length,
+      multasIndicacao: multasAtivas.filter(r => r.situacao_condutor === "AGUARDANDO_INDICACAO" && !["ENCERRADA", "CANCELADA"].includes(r.status)).length,
     },
   };
 }
