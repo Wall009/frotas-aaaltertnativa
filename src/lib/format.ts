@@ -103,3 +103,28 @@ export const MESES = [
 ];
 
 export const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+export const STATUS_MULTA_LABEL: Record<string, string> = {
+  NOVA: "Nova",
+  EM_ANALISE: "Em análise",
+  AGUARDANDO_CONDUTOR: "Aguardando condutor",
+  INDICACAO_PENDENTE: "Indicação pendente",
+  INDICACAO_REALIZADA: "Indicação realizada",
+  AGUARDANDO_PAGAMENTO: "Aguardando pagamento",
+  PAGA: "Paga",
+  EM_RECURSO: "Em recurso",
+  RECURSO_DEFERIDO: "Recurso deferido",
+  RECURSO_INDEFERIDO: "Recurso indeferido",
+  CANCELADA: "Cancelada",
+  ENCERRADA: "Encerrada",
+};
+
+export const SITUACAO_CONDUTOR_LABEL: Record<string, string> = {
+  IDENTIFICADO: "Identificado",
+  AGUARDANDO_INDICACAO: "Aguardando indicação",
+  NAO_IDENTIFICADO: "Não identificado",
+};
+
+export function diasRestantes(data?: string | null): number | null {
+  return daysUntil(data);
+}
