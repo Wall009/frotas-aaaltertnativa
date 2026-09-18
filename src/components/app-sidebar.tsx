@@ -8,6 +8,7 @@ import {
   Gauge,
   Settings,
   ShieldAlert,
+  TrafficCone,
   Wrench,
 } from "lucide-react";
 import {
@@ -31,6 +32,7 @@ const mainItems = [
   { label: "Vencimentos e Agenda", to: "/vencimentos", icon: CalendarDays },
   { label: "Sinistros", to: "/sinistros", icon: ShieldAlert },
   { label: "Manutenção", to: "/manutencao", icon: Wrench },
+  { label: "Multas", to: "/multas", icon: TrafficCone },
   { label: "Dados complementares", to: "/dados-complementares", icon: CircleDollarSign },
   { label: "Relatórios", to: "/relatorios", icon: ChartNoAxesCombined },
 ] as const;
