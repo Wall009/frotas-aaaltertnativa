@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { AnexosPanel } from "@/components/anexos-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultaForm } from "@/components/multa-form";
 import { PageHeader } from "@/components/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
@@ -22,16 +23,17 @@ function FineDetail() {
   const { multaId } = Route.useParams();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["multa", multaId], queryFn: async () => {
-    const [multa, motoristas, pagamentos, recursos, timeline, anexos] = await Promise.all([
+    const [multa, motoristas, pagamentos, recursos, timeline, anexos, veiculos] = await Promise.all([
       supabase.from("multas").select("*, veiculos(placa, marca_modelo)").eq("id", multaId).single(),
       supabase.from("motoristas").select("id, nome, cpf, cnh, categoria_cnh, validade_cnh").eq("ativo", true).order("nome"),
       supabase.from("multa_pagamentos").select("*").eq("multa_id", multaId).order("created_at", { ascending: false }),
       supabase.from("multa_recursos").select("*").eq("multa_id", multaId).order("created_at", { ascending: false }),
       supabase.from("multa_timeline").select("*").eq("multa_id", multaId).order("created_at", { ascending: false }),
       supabase.from("anexos").select("*").eq("entidade_id", multaId).order("created_at", { ascending: false }),
+      supabase.from("veiculos").select("id, placa").neq("status", "VENDIDO").order("placa"),
     ]);
     if (multa.error) throw multa.error;
-    return { multa: multa.data, motoristas: motoristas.data ?? [], pagamentos: pagamentos.data ?? [], recursos: recursos.data ?? [], timeline: timeline.data ?? [], anexos: anexos.data ?? [] };
+    return { multa: multa.data, motoristas: motoristas.data ?? [], pagamentos: pagamentos.data ?? [], recursos: recursos.data ?? [], timeline: timeline.data ?? [], anexos: anexos.data ?? [], veiculos: veiculos.data ?? [] };
   } });
 
   const refresh = async () => { await queryClient.invalidateQueries({ queryKey: ["multa", multaId] }); await queryClient.invalidateQueries({ queryKey: ["multas"] }); };
@@ -173,11 +175,14 @@ function FineDetail() {
       </TabsContent>
 
       <TabsContent value="infracao">
-        <Card className="rounded-lg"><CardContent className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="rounded-lg"><CardContent className="p-6">
+          <div className="mb-4 flex justify-end"><MultaForm editing={m} vehicles={data.veiculos} trigger={<Button size="sm" variant="outline"><Pencil className="mr-2 size-4" />Editar dados da infração</Button>} /></div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {[["Órgão autuador", m.orgao_autuador], ["Código", m.codigo_infracao], ["Enquadramento", m.enquadramento], ["Gravidade", m.gravidade], ["Pontos", m.pontos], ["Local", m.local], ["Município", m.municipio], ["UF", m.uf], ["Rodovia", m.rodovia], ["Km", m.km], ["Sentido", m.sentido], ["Vencimento", formatDate(m.data_vencimento)]].map(([label, value]) => (
             <div key={String(label)}><p className="text-xs font-medium uppercase text-muted-foreground">{label}</p><p className="mt-1 text-sm font-medium">{value || "—"}</p></div>
           ))}
           {m.observacoes && <div className="sm:col-span-2 lg:col-span-3"><p className="text-xs font-medium uppercase text-muted-foreground">Observações</p><p className="mt-1 whitespace-pre-wrap text-sm">{m.observacoes}</p></div>}
+          </div>
         </CardContent></Card>
       </TabsContent>
 

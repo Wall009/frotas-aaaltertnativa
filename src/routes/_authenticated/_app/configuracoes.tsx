@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Database, FileSpreadsheet, IdCard, Pencil, Plus, SlidersHorizontal, Users } from "lucide-react";
+import { Database, FileSpreadsheet, IdCard, Pencil, Plus, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatusBadge } from "@/components/status-badge";
 import { Switch } from "@/components/ui/switch";
 import { SpreadsheetImport } from "@/components/spreadsheet-import";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDate } from "@/lib/format";
+import { daysUntil, formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/_app/configuracoes")({ head: () => ({ meta: [{ title: "Configurações — Controle de Frota" }, { name: "description", content: "Parâmetros e cadastros auxiliares da gestão de frota." }, { property: "og:title", content: "Configurações — Controle de Frota" }, { property: "og:description", content: "Parâmetros e cadastros auxiliares da gestão de frota." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: SettingsPage });
 function SettingsPage() {
   const queryClient = useQueryClient();
+  const { profile: myProfile, isAdmin } = useCurrentProfile();
   const { data } = useQuery({ queryKey: ["configuracoes"], queryFn: async () => { const [cfg, params] = await Promise.all([supabase.from("configuracoes").select("*").order("grupo").order("ordem"), supabase.from("parametros").select("*").order("chave")]); if (cfg.error || params.error) throw cfg.error || params.error; return { cfg: cfg.data ?? [], params: params.data ?? [] }; } });
   const { data: responsaveis } = useQuery({ queryKey: ["responsaveis"], queryFn: async () => { const { data, error } = await supabase.from("responsaveis").select("*").order("nome"); if (error) throw error; return data ?? []; } });
   const { data: motoristas } = useQuery({ queryKey: ["motoristas"], queryFn: async () => { const { data, error } = await supabase.from("motoristas").select("*").order("nome"); if (error) throw error; return data ?? []; } });
+  const { data: usuarios } = useQuery({ queryKey: ["usuarios"], queryFn: async () => { const { data, error } = await supabase.from("profiles").select("*").order("nome"); if (error) throw error; return data ?? []; }, enabled: isAdmin });
   const diasAlertaAtual = data?.params.find(p => p.chave === "dias_alerta_vencimento")?.valor ?? "30";
   const salvarDiasAlerta = async (valor: string): Promise<void> => {
     const { error } = await supabase.from("parametros").update({ valor }).eq("chave", "dias_alerta_vencimento");
@@ -39,6 +42,12 @@ function SettingsPage() {
     const { error } = await supabase.from("motoristas").update({ ativo }).eq("id", id);
     if (error) { toast.error("Não foi possível atualizar", { description: error.message }); return; }
     await queryClient.invalidateQueries({ queryKey: ["motoristas"] });
+  };
+  const alterarPapel = async (id: string, role: string): Promise<void> => {
+    const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
+    if (error) { toast.error("Não foi possível atualizar o papel", { description: error.message }); return; }
+    toast.success("Papel atualizado");
+    await queryClient.invalidateQueries({ queryKey: ["usuarios"] });
   };
   return <>
     <PageHeader title="Configurações" description="Cadastros auxiliares e regras usadas pelo sistema." />
@@ -83,20 +92,50 @@ function SettingsPage() {
       <CardContent className="p-0">
         {!motoristas?.length ? <p className="p-6 text-sm text-muted-foreground">Nenhum motorista cadastrado.</p> : (
           <ul className="divide-y">
-            {motoristas.map(m => (
+            {motoristas.map(m => { const cnhDias = daysUntil(m.validade_cnh); return (
               <li key={m.id} className="flex items-center gap-4 px-6 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{m.nome}</p>
                   <p className="truncate text-xs text-muted-foreground">{[m.cpf, m.cnh ? `CNH ${m.cnh}${m.categoria_cnh ? ` (${m.categoria_cnh})` : ""}` : null, m.validade_cnh ? `válida até ${formatDate(m.validade_cnh)}` : null].filter(Boolean).join(" · ") || "—"}</p>
                 </div>
+                {cnhDias !== null && cnhDias <= 30 && <StatusBadge value={cnhDias < 0 ? "CNH vencida" : "CNH vencendo"} />}
                 <MotoristaForm editing={m} trigger={<Button size="icon" variant="ghost"><Pencil className="size-4" /></Button>} />
                 <Switch checked={m.ativo} onCheckedChange={(checked) => toggleMotoristaAtivo(m.id, checked)} />
               </li>
-            ))}
+            ); })}
           </ul>
         )}
       </CardContent>
     </Card>
+    {isAdmin && (
+      <Card className="mt-6 rounded-lg">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 items-center justify-center rounded-md bg-primary/10 text-primary"><ShieldCheck className="size-5" /></span>
+            <div><CardTitle className="text-base">Usuários</CardTitle><CardDescription>Quem tem acesso ao sistema e o papel de cada um.</CardDescription></div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {!usuarios?.length ? <p className="p-6 text-sm text-muted-foreground">Nenhum usuário encontrado.</p> : (
+            <ul className="divide-y">
+              {usuarios.map(u => (
+                <li key={u.id} className="flex items-center gap-4 px-6 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{u.nome || u.email || "—"}</p>
+                    <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+                  </div>
+                  <Select value={u.role} onValueChange={(role) => alterarPapel(u.id, role)} disabled={u.id === myProfile?.id}>
+                    <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="admin">Administrador</SelectItem><SelectItem value="operador">Operador</SelectItem></SelectContent>
+                  </Select>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+        <p className="px-6 pb-4 text-xs text-muted-foreground">Administradores podem marcar veículos como vendidos e excluir anexos. Você não pode alterar seu próprio papel.</p>
+      </Card>
+    )}
   </>;
 }
 function SettingsCard({ icon: Icon, title, description, count, children }: { icon: typeof Database; title: string; description: string; count: number; children: React.ReactNode }) { return <Card className="rounded-lg"><CardHeader><div className="flex items-start justify-between"><span className="flex size-10 items-center justify-center rounded-md bg-primary/10 text-primary"><Icon className="size-5" /></span><span className="text-xs text-muted-foreground">{count} item(ns)</span></div><CardTitle className="pt-3 text-base">{title}</CardTitle><CardDescription>{description}</CardDescription></CardHeader><CardContent>{children}</CardContent></Card>; }

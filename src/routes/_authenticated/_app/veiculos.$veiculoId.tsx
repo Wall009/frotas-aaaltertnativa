@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate, formatDateTime, formatNumber, situacaoVencimento, SITUACAO_LABEL, STATUS_MULTA_LABEL } from "@/lib/format";
 
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/_app/veiculos/$veiculoId")
 
 function VehicleDetail() {
   const { veiculoId } = Route.useParams();
+  const { isAdmin } = useCurrentProfile();
   const { data, isLoading } = useQuery({ queryKey: ["veiculo", veiculoId], queryFn: async () => {
     const [vehicle, deadlines, maintenance, claims, fines, technical, history, files] = await Promise.all([
       supabase.from("veiculos").select("*").eq("id", veiculoId).single(), supabase.from("vencimentos").select("*").eq("veiculo_id", veiculoId).order("data_vencimento"), supabase.from("manutencoes").select("*").eq("veiculo_id", veiculoId).order("data_abertura", { ascending: false }), supabase.from("sinistros").select("*").eq("veiculo_id", veiculoId).order("data", { ascending: false }), supabase.from("multas").select("*").eq("veiculo_id", veiculoId).order("data_infracao", { ascending: false }), supabase.from("ficha_tecnica").select("*").eq("veiculo_id", veiculoId).maybeSingle(), supabase.from("historico").select("*").eq("veiculo_id", veiculoId).order("created_at", { ascending: false }), supabase.from("anexos").select("*").eq("entidade_id", veiculoId).order("created_at", { ascending: false }),
@@ -26,10 +28,13 @@ function VehicleDetail() {
   const tabClass = "h-10 shrink-0";
 
   const docsAtencao = data.deadlines.filter(r => ["VENCIDO", "PROXIMO DO VENCIMENTO"].includes(situacaoVencimento(r.data_vencimento, r.status)));
+  const licencasEmDia = data.deadlines.filter(r => situacaoVencimento(r.data_vencimento, r.status) === "DENTRO DA VALIDADE").length;
+  const licencasVencidas = data.deadlines.filter(r => situacaoVencimento(r.data_vencimento, r.status) === "VENCIDO").length;
+  const licencasProximas = data.deadlines.filter(r => situacaoVencimento(r.data_vencimento, r.status) === "PROXIMO DO VENCIMENTO").length;
   const multasPendentes = data.fines.filter(m => !["PAGA", "ENCERRADA", "CANCELADA"].includes(m.status));
   const sinistrosAbertos = data.claims.filter(c => !c.status.toUpperCase().includes("CONCLU"));
 
-  return <><PageHeader title={v.placa} description={v.marca_modelo || [v.marca, v.modelo].filter(Boolean).join(" ") || "Veículo sem descrição"} actions={<><StatusBadge value={v.status} />{v.status !== "VENDIDO" && <MarcarVendidoForm veiculoId={v.id} placa={v.placa} trigger={<Button variant="outline">Marcar como vendido</Button>} />}<Button variant="outline" asChild><Link to="/veiculos"><ArrowLeft />Voltar</Link></Button></>} /><Tabs defaultValue="visao-geral"><div className="overflow-x-auto"><TabsList className="h-auto w-max min-w-full justify-start"><TabsTrigger className={tabClass} value="visao-geral">Visão geral</TabsTrigger><TabsTrigger className={tabClass} value="dados">Dados gerais</TabsTrigger><TabsTrigger className={tabClass} value="documentacao">Documentação</TabsTrigger><TabsTrigger className={tabClass} value="manutencao">Manutenção</TabsTrigger><TabsTrigger className={tabClass} value="sinistros">Sinistros</TabsTrigger><TabsTrigger className={tabClass} value="multas">Multas</TabsTrigger><TabsTrigger className={tabClass} value="ficha">Ficha técnica</TabsTrigger><TabsTrigger className={tabClass} value="historico">Histórico</TabsTrigger><TabsTrigger className={tabClass} value="anexos">Anexos</TabsTrigger></TabsList></div>
+  return <><PageHeader title={v.placa} description={v.marca_modelo || [v.marca, v.modelo].filter(Boolean).join(" ") || "Veículo sem descrição"} actions={<><StatusBadge value={v.status} />{v.status !== "VENDIDO" && isAdmin && <MarcarVendidoForm veiculoId={v.id} placa={v.placa} trigger={<Button variant="outline">Marcar como vendido</Button>} />}<Button variant="outline" asChild><Link to="/veiculos"><ArrowLeft />Voltar</Link></Button></>} /><Tabs defaultValue="visao-geral"><div className="overflow-x-auto"><TabsList className="h-auto w-max min-w-full justify-start"><TabsTrigger className={tabClass} value="visao-geral">Visão geral</TabsTrigger><TabsTrigger className={tabClass} value="dados">Dados gerais</TabsTrigger><TabsTrigger className={tabClass} value="documentacao">Documentação</TabsTrigger><TabsTrigger className={tabClass} value="manutencao">Manutenção</TabsTrigger><TabsTrigger className={tabClass} value="sinistros">Sinistros</TabsTrigger><TabsTrigger className={tabClass} value="multas">Multas</TabsTrigger><TabsTrigger className={tabClass} value="ficha">Ficha técnica</TabsTrigger><TabsTrigger className={tabClass} value="historico">Histórico</TabsTrigger><TabsTrigger className={tabClass} value="anexos">Anexos</TabsTrigger></TabsList></div>
 
     <TabsContent value="visao-geral">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -37,6 +42,13 @@ function VehicleDetail() {
         <Card className="rounded-lg shadow-card"><CardContent className="p-4"><p className="text-xs font-medium uppercase text-muted-foreground">Unidade / Localização</p><p className="mt-1 text-sm font-semibold">{v.unidade || "—"}</p><p className="text-xs text-muted-foreground">{v.localizacao || "—"}</p></CardContent></Card>
         <Card className="rounded-lg shadow-card"><CardContent className="p-4"><p className="text-xs font-medium uppercase text-muted-foreground">Quilometragem</p><p className="mt-1 text-sm font-semibold">{v.quilometragem ? `${formatNumber(v.quilometragem, 0)} km` : "—"}</p></CardContent></Card>
         <Card className="rounded-lg shadow-card"><CardContent className="p-4"><p className="text-xs font-medium uppercase text-muted-foreground">Status</p><p className="mt-1"><StatusBadge value={v.status} /></p></CardContent></Card>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <StatMini label="Licenças em dia" value={licencasEmDia} tone="text-success bg-success/10" />
+        <StatMini label="Licenças próximas" value={licencasProximas} tone="text-warning-foreground bg-warning/20" />
+        <StatMini label="Licenças vencidas" value={licencasVencidas} tone="text-destructive bg-destructive/10" />
+        <StatMini label="Multas" value={data.fines.length} tone="text-warning-foreground bg-warning/20" />
+        <StatMini label="Sinistros" value={data.claims.length} tone="text-destructive bg-destructive/10" />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card className="rounded-lg shadow-card">
@@ -87,3 +99,7 @@ function VehicleDetail() {
 }
 
 function SimpleRows({ rows }: { rows: Array<[string, string, string, string, string]> }) { return <Card className="rounded-lg"><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Descrição</TableHead><TableHead>Data</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{rows.map(r => <TableRow key={r[0]}><TableCell className="font-medium">{r[1]}</TableCell><TableCell>{r[2]}</TableCell><TableCell>{r[3]}</TableCell><TableCell><StatusBadge value={r[4]} /></TableCell></TableRow>)}</TableBody></Table></CardContent></Card>; }
+
+function StatMini({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return <Card className="rounded-lg shadow-card"><CardContent className="flex items-center justify-between p-4"><div><p className="text-xs font-medium text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div><span className={`flex size-9 items-center justify-center rounded-md text-sm font-bold ${tone}`}>{value}</span></CardContent></Card>;
+}
