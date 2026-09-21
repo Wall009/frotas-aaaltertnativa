@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { formatDateTime } from "@/lib/format";
 import type { Row } from "@/lib/db";
 
@@ -21,6 +22,7 @@ export function AnexosPanel({ entidade, entidadeId, files, queryKey }: {
   const [uploading, setUploading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { isAdmin } = useCurrentProfile();
 
   const refresh = async (): Promise<void> => { await queryClient.invalidateQueries({ queryKey }); };
 
@@ -98,7 +100,7 @@ export function AnexosPanel({ entidade, entidadeId, files, queryKey }: {
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button size="icon" variant="ghost" disabled={busyId === f.id} title="Excluir">
+                    <Button size="icon" variant="ghost" disabled={busyId === f.id || !isAdmin} title={isAdmin ? "Excluir" : "Apenas administradores podem excluir"}>
                       <Trash2 className="size-4 text-destructive" />
                     </Button>
                   </AlertDialogTrigger>

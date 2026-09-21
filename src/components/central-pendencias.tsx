@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, CalendarDays, FileClock, Paperclip, ShieldAlert, TrafficCone, Wrench } from "lucide-react";
+import { AlertTriangle, CalendarDays, FileClock, IdCard, Paperclip, ShieldAlert, TrafficCone, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function CentralPendencias({ vencidos, proximos, agendadas, sinistros, manutencoes, anexos, multasIndicacao }: {
-  vencidos: number; proximos: number; agendadas: number; sinistros: number; manutencoes: number; anexos: number; multasIndicacao: number;
+export function CentralPendencias({ vencidos, proximos, agendadas, sinistros, manutencoes, anexos, multasIndicacao, cnhVencendo }: {
+  vencidos: number; proximos: number; agendadas: number; sinistros: number; manutencoes: number; anexos: number; multasIndicacao: number; cnhVencendo: number;
 }) {
   const itens = [
     { icon: AlertTriangle, tone: "text-destructive", label: `${vencidos} documento${vencidos === 1 ? "" : "s"} vencido${vencidos === 1 ? "" : "s"}`, to: "/vencimentos" as const },
@@ -13,6 +13,7 @@ export function CentralPendencias({ vencidos, proximos, agendadas, sinistros, ma
     { icon: ShieldAlert, tone: "text-destructive", label: `${sinistros} sinistro${sinistros === 1 ? "" : "s"} em andamento`, to: "/sinistros" as const },
     { icon: Wrench, tone: "text-primary", label: `${manutencoes} veículo${manutencoes === 1 ? "" : "s"} em manutenção`, to: "/manutencao" as const },
     { icon: TrafficCone, tone: "text-warning-foreground", label: `${multasIndicacao} multa${multasIndicacao === 1 ? "" : "s"} com indicação de condutor pendente`, to: "/multas" as const },
+    { icon: IdCard, tone: "text-warning-foreground", label: `${cnhVencendo} CNH${cnhVencendo === 1 ? "" : "s"} vencendo em 30 dias`, to: "/configuracoes" as const },
     { icon: Paperclip, tone: "text-muted-foreground", label: `${anexos} documento${anexos === 1 ? "" : "s"} anexado${anexos === 1 ? "" : "s"} no sistema`, to: "/vencimentos" as const },
   ];
   return (
