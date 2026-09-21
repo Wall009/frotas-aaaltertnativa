@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DIAS_ALERTA_PADRAO } from "@/lib/format";
+import { daysUntil, DIAS_ALERTA_PADRAO } from "@/lib/format";
 
 export async function fetchDashboard() {
-  const [veiculosAll, vencimentos, agenda, sinistrosList, manutencoesList, multasList, anexosCount] = await Promise.all([
+  const [veiculosAll, vencimentos, agenda, sinistrosList, manutencoesList, multasList, anexosCount, motoristasList] = await Promise.all([
     supabase.from("veiculos").select("id, placa, marca_modelo, status"),
     supabase.from("vencimentos").select("id, veiculo_id, tipo_codigo, descricao, data_vencimento, status").order("data_vencimento", { ascending: true }),
     supabase.from("agenda_eventos").select("id, veiculo_id, atividade, titulo, data, hora, status").eq("status", "AGENDADO").order("data", { ascending: true }),
@@ -10,8 +10,9 @@ export async function fetchDashboard() {
     supabase.from("manutencoes").select("id, veiculo_id, tipo, problema, previsao_saida, status, oficina").order("created_at", { ascending: false }),
     supabase.from("multas").select("id, veiculo_id, status, situacao_condutor"),
     supabase.from("anexos").select("id", { count: "exact", head: true }),
+    supabase.from("motoristas").select("id, nome, validade_cnh").eq("ativo", true),
   ]);
-  const error = [veiculosAll.error, vencimentos.error, agenda.error, sinistrosList.error, manutencoesList.error, multasList.error, anexosCount.error].find(Boolean); if (error) throw error;
+  const error = [veiculosAll.error, vencimentos.error, agenda.error, sinistrosList.error, manutencoesList.error, multasList.error, anexosCount.error, motoristasList.error].find(Boolean); if (error) throw error;
 
   const activeIds = new Set((veiculosAll.data ?? []).filter(v => v.status !== "VENDIDO").map(v => v.id));
   const veiculosAtivos = (veiculosAll.data ?? []).filter(v => v.status !== "VENDIDO");
@@ -22,6 +23,7 @@ export async function fetchDashboard() {
   const manutencoesAtivas = (manutencoesList.data ?? []).filter(r => isAtivoOuLivre(r.veiculo_id));
   const multasAtivas = (multasList.data ?? []).filter(r => isAtivoOuLivre(r.veiculo_id));
   const agendaAtiva = (agenda.data ?? []).filter(r => isAtivoOuLivre(r.veiculo_id));
+  const cnhVencendo = (motoristasList.data ?? []).filter(m => { const d = daysUntil(m.validade_cnh); return d !== null && d <= 30; });
 
   return {
     veiculos: veiculosAtivos,
@@ -36,6 +38,7 @@ export async function fetchDashboard() {
       anexos: anexosCount.count ?? 0,
       multasPendentes: multasAtivas.filter(r => !["PAGA", "ENCERRADA", "CANCELADA"].includes(r.status)).length,
       multasIndicacao: multasAtivas.filter(r => r.situacao_condutor === "AGUARDANDO_INDICACAO" && !["ENCERRADA", "CANCELADA"].includes(r.status)).length,
+      cnhVencendo: cnhVencendo.length,
     },
   };
 }
