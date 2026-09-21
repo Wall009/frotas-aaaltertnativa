@@ -16,6 +16,9 @@ dist-ssr
 .nitro
 *.local
 
+# Auto-generated route tree — nunca deve ser versionado
+routeTree.gen.ts
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
