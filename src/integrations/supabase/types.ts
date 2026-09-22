@@ -863,6 +863,54 @@ export type Database = {
           },
         ]
       }
+      instrucoes_documento: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          custo_estimado: string | null
+          documentos_necessarios: string | null
+          id: string
+          link_oficial: string | null
+          observacoes: string | null
+          orgao_responsavel: string | null
+          passo_a_passo: string | null
+          prazo_estimado: string | null
+          tipo_codigo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          custo_estimado?: string | null
+          documentos_necessarios?: string | null
+          id?: string
+          link_oficial?: string | null
+          observacoes?: string | null
+          orgao_responsavel?: string | null
+          passo_a_passo?: string | null
+          prazo_estimado?: string | null
+          tipo_codigo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          custo_estimado?: string | null
+          documentos_necessarios?: string | null
+          id?: string
+          link_oficial?: string | null
+          observacoes?: string | null
+          orgao_responsavel?: string | null
+          passo_a_passo?: string | null
+          prazo_estimado?: string | null
+          tipo_codigo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tipos_documento: {
         Row: {
           ativo: boolean
