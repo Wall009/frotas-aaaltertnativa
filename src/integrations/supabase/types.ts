@@ -409,6 +409,12 @@ export type Database = {
           valor_atualizado: number | null
           valor_original: number | null
           veiculo_id: string | null
+          termo_assinado: boolean
+          data_notificacao: string | null
+          motorista_presumido: string | null
+          canal_indicacao: string | null
+          alerta_rh_financeiro: boolean
+          data_lancamento_frotas: string | null
         }
         Insert: {
           codigo_infracao?: string | null
@@ -442,6 +448,12 @@ export type Database = {
           valor_atualizado?: number | null
           valor_original?: number | null
           veiculo_id?: string | null
+          termo_assinado?: boolean
+          data_notificacao?: string | null
+          motorista_presumido?: string | null
+          canal_indicacao?: string | null
+          alerta_rh_financeiro?: boolean
+          data_lancamento_frotas?: string | null
         }
         Update: {
           codigo_infracao?: string | null
@@ -475,6 +487,12 @@ export type Database = {
           valor_atualizado?: number | null
           valor_original?: number | null
           veiculo_id?: string | null
+          termo_assinado?: boolean
+          data_notificacao?: string | null
+          motorista_presumido?: string | null
+          canal_indicacao?: string | null
+          alerta_rh_financeiro?: boolean
+          data_lancamento_frotas?: string | null
         }
         Relationships: [
           {
@@ -682,6 +700,30 @@ export type Database = {
         }
         Relationships: []
       }
+      referencia_infracoes: {
+        Row: {
+          created_at: string
+          descricao: string
+          gravidade: string
+          id: string
+          pontuacao: number | null
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          gravidade: string
+          id?: string
+          pontuacao?: number | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          gravidade?: string
+          id?: string
+          pontuacao?: number | null
+        }
+        Relationships: []
+      }
       responsaveis: {
         Row: {
           ativo: boolean
@@ -786,6 +828,57 @@ export type Database = {
           valor_estimado: number | null
           valor_final: number | null
           veiculo_id: string | null
+          numero_roo: string | null
+          unidade_filial: string | null
+          setor_responsavel: string | null
+          responsavel_preenchimento: string | null
+          cargo_responsavel: string | null
+          tipo_evento: string | null
+          tipo_evento_outro: string | null
+          implemento_equipamento: string | null
+          nome_empregado: string | null
+          funcao_empregado: string | null
+          matricula_empregado: string | null
+          supervisor: string | null
+          descricao_fatos: string | null
+          versao_empregado: string | null
+          evidencias: Json
+          descricao_evidencias: string | null
+          dano_material: boolean | null
+          dano_terceiro: boolean | null
+          dano_carga: boolean | null
+          dano_veiculo: boolean | null
+          franquia_seguro: boolean | null
+          valor_estimado_inicial: number | null
+          valor_comprovado: number | null
+          discriminacao_prejuizo: string | null
+          data_notificacao_defesa: string | null
+          prazo_defesa_concedido: boolean | null
+          defesa_apresentada: boolean | null
+          forma_defesa: string | null
+          houve_violacao_procedimento: boolean | null
+          norma_violada: string | null
+          nexo_causal: boolean | null
+          indicio: string | null
+          medida_adotada: string | null
+          medida_adotada_outra: string | null
+          valor_ressarcimento: number | null
+          fundamentacao_objetiva: string | null
+          responsavel_tecnico: string | null
+          cargo_responsavel_tecnico: string | null
+          terceiro_nome: string | null
+          terceiro_rg: string | null
+          terceiro_cpf: string | null
+          terceiro_cnh: string | null
+          terceiro_endereco: string | null
+          quitacao_valor: number | null
+          quitacao_forma_pagamento: string | null
+          quitacao_banco: string | null
+          quitacao_agencia: string | null
+          quitacao_conta: string | null
+          quitacao_pix: string | null
+          quitacao_data: string | null
+          representante_empresa: string | null
         }
         Insert: {
           analista?: string | null
@@ -819,6 +912,57 @@ export type Database = {
           valor_estimado?: number | null
           valor_final?: number | null
           veiculo_id?: string | null
+          numero_roo?: string | null
+          unidade_filial?: string | null
+          setor_responsavel?: string | null
+          responsavel_preenchimento?: string | null
+          cargo_responsavel?: string | null
+          tipo_evento?: string | null
+          tipo_evento_outro?: string | null
+          implemento_equipamento?: string | null
+          nome_empregado?: string | null
+          funcao_empregado?: string | null
+          matricula_empregado?: string | null
+          supervisor?: string | null
+          descricao_fatos?: string | null
+          versao_empregado?: string | null
+          evidencias?: Json | null
+          descricao_evidencias?: string | null
+          dano_material?: boolean | null
+          dano_terceiro?: boolean | null
+          dano_carga?: boolean | null
+          dano_veiculo?: boolean | null
+          franquia_seguro?: boolean | null
+          valor_estimado_inicial?: number | null
+          valor_comprovado?: number | null
+          discriminacao_prejuizo?: string | null
+          data_notificacao_defesa?: string | null
+          prazo_defesa_concedido?: boolean | null
+          defesa_apresentada?: boolean | null
+          forma_defesa?: string | null
+          houve_violacao_procedimento?: boolean | null
+          norma_violada?: string | null
+          nexo_causal?: boolean | null
+          indicio?: string | null
+          medida_adotada?: string | null
+          medida_adotada_outra?: string | null
+          valor_ressarcimento?: number | null
+          fundamentacao_objetiva?: string | null
+          responsavel_tecnico?: string | null
+          cargo_responsavel_tecnico?: string | null
+          terceiro_nome?: string | null
+          terceiro_rg?: string | null
+          terceiro_cpf?: string | null
+          terceiro_cnh?: string | null
+          terceiro_endereco?: string | null
+          quitacao_valor?: number | null
+          quitacao_forma_pagamento?: string | null
+          quitacao_banco?: string | null
+          quitacao_agencia?: string | null
+          quitacao_conta?: string | null
+          quitacao_pix?: string | null
+          quitacao_data?: string | null
+          representante_empresa?: string | null
         }
         Update: {
           analista?: string | null
@@ -852,6 +996,57 @@ export type Database = {
           valor_estimado?: number | null
           valor_final?: number | null
           veiculo_id?: string | null
+          numero_roo?: string | null
+          unidade_filial?: string | null
+          setor_responsavel?: string | null
+          responsavel_preenchimento?: string | null
+          cargo_responsavel?: string | null
+          tipo_evento?: string | null
+          tipo_evento_outro?: string | null
+          implemento_equipamento?: string | null
+          nome_empregado?: string | null
+          funcao_empregado?: string | null
+          matricula_empregado?: string | null
+          supervisor?: string | null
+          descricao_fatos?: string | null
+          versao_empregado?: string | null
+          evidencias?: Json | null
+          descricao_evidencias?: string | null
+          dano_material?: boolean | null
+          dano_terceiro?: boolean | null
+          dano_carga?: boolean | null
+          dano_veiculo?: boolean | null
+          franquia_seguro?: boolean | null
+          valor_estimado_inicial?: number | null
+          valor_comprovado?: number | null
+          discriminacao_prejuizo?: string | null
+          data_notificacao_defesa?: string | null
+          prazo_defesa_concedido?: boolean | null
+          defesa_apresentada?: boolean | null
+          forma_defesa?: string | null
+          houve_violacao_procedimento?: boolean | null
+          norma_violada?: string | null
+          nexo_causal?: boolean | null
+          indicio?: string | null
+          medida_adotada?: string | null
+          medida_adotada_outra?: string | null
+          valor_ressarcimento?: number | null
+          fundamentacao_objetiva?: string | null
+          responsavel_tecnico?: string | null
+          cargo_responsavel_tecnico?: string | null
+          terceiro_nome?: string | null
+          terceiro_rg?: string | null
+          terceiro_cpf?: string | null
+          terceiro_cnh?: string | null
+          terceiro_endereco?: string | null
+          quitacao_valor?: number | null
+          quitacao_forma_pagamento?: string | null
+          quitacao_banco?: string | null
+          quitacao_agencia?: string | null
+          quitacao_conta?: string | null
+          quitacao_pix?: string | null
+          quitacao_data?: string | null
+          representante_empresa?: string | null
         }
         Relationships: [
           {
