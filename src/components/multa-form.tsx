@@ -1,6 +1,6 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -17,6 +17,25 @@ export function MultaForm({ trigger, vehicles, editing }: { trigger: ReactNode; 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const d = (value?: string | null) => value ?? undefined;
+
+  const { data: referencias = [] } = useQuery({
+    queryKey: ["referencia_infracoes"],
+    queryFn: async () => { const r = await supabase.from("referencia_infracoes").select("descricao, gravidade, pontuacao"); if (r.error) throw r.error; return r.data; },
+    enabled: open,
+    staleTime: 10 * 60_000,
+  });
+  const referenciaPorDescricao = useMemo(() => new Map(referencias.map(r => [r.descricao.trim().toUpperCase(), r])), [referencias]);
+
+  const [descricaoInfracao, setDescricaoInfracao] = useState(editing?.descricao_infracao ?? "");
+  const [gravidade, setGravidade] = useState(editing?.gravidade ?? "");
+  const [pontos, setPontos] = useState<number | "">(editing?.pontos ?? "");
+  useEffect(() => { if (open) { setDescricaoInfracao(editing?.descricao_infracao ?? ""); setGravidade(editing?.gravidade ?? ""); setPontos(editing?.pontos ?? ""); } }, [open, editing]);
+
+  const aplicarSugestao = (valor: string) => {
+    setDescricaoInfracao(valor);
+    const ref = referenciaPorDescricao.get(valor.trim().toUpperCase());
+    if (ref) { setGravidade(ref.gravidade); if (ref.pontuacao != null) setPontos(ref.pontuacao); }
+  };
 
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
@@ -96,7 +115,12 @@ export function MultaForm({ trigger, vehicles, editing }: { trigger: ReactNode; 
             <div className="space-y-2"><Label htmlFor="hora_infracao">Hora</Label><Input id="hora_infracao" name="hora_infracao" type="time" defaultValue={d(editing?.hora_infracao?.slice(0, 5))} /></div>
             <div className="space-y-2"><Label htmlFor="codigo_infracao">Código da infração</Label><Input id="codigo_infracao" name="codigo_infracao" maxLength={255} defaultValue={d(editing?.codigo_infracao)} /></div>
 
-            <div className="space-y-2 sm:col-span-2 lg:col-span-3"><Label htmlFor="descricao_infracao">Descrição da infração</Label><Textarea id="descricao_infracao" name="descricao_infracao" maxLength={2000} defaultValue={d(editing?.descricao_infracao)} /></div>
+            <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+              <Label htmlFor="descricao_infracao">Descrição da infração</Label>
+              <Input id="descricao_infracao" name="descricao_infracao" maxLength={500} list="referencia-infracoes-list" value={descricaoInfracao} onChange={e => aplicarSugestao(e.target.value)} />
+              <datalist id="referencia-infracoes-list">{referencias.map(r => <option key={r.descricao} value={r.descricao} />)}</datalist>
+              <p className="text-xs text-muted-foreground">Se a descrição bater com a tabela de referência, gravidade e pontos são preenchidos automaticamente.</p>
+            </div>
 
             <div className="space-y-2"><Label htmlFor="local">Local</Label><Input id="local" name="local" maxLength={255} defaultValue={d(editing?.local)} /></div>
             <div className="space-y-2"><Label htmlFor="municipio">Município</Label><Input id="municipio" name="municipio" maxLength={255} defaultValue={d(editing?.municipio)} /></div>
@@ -107,11 +131,11 @@ export function MultaForm({ trigger, vehicles, editing }: { trigger: ReactNode; 
 
             <div className="space-y-2"><Label htmlFor="enquadramento">Enquadramento</Label><Input id="enquadramento" name="enquadramento" maxLength={255} defaultValue={d(editing?.enquadramento)} /></div>
             <div className="space-y-2"><Label htmlFor="gravidade">Gravidade</Label>
-              <Select name="gravidade" defaultValue={editing?.gravidade ?? ""}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <Select name="gravidade" value={gravidade} onValueChange={setGravidade}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent><SelectItem value="LEVE">Leve</SelectItem><SelectItem value="MEDIA">Média</SelectItem><SelectItem value="GRAVE">Grave</SelectItem><SelectItem value="GRAVISSIMA">Gravíssima</SelectItem></SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label htmlFor="pontos">Pontos</Label><Input id="pontos" name="pontos" type="number" defaultValue={editing?.pontos ?? undefined} /></div>
+            <div className="space-y-2"><Label htmlFor="pontos">Pontos</Label><Input id="pontos" name="pontos" type="number" value={pontos} onChange={e => setPontos(e.target.value === "" ? "" : Number(e.target.value))} /></div>
 
             <div className="space-y-2"><Label htmlFor="valor_original">Valor original</Label><Input id="valor_original" name="valor_original" type="number" step="0.01" defaultValue={editing?.valor_original ?? undefined} /></div>
             <div className="space-y-2"><Label htmlFor="valor_atualizado">Valor atualizado</Label><Input id="valor_atualizado" name="valor_atualizado" type="number" step="0.01" defaultValue={editing?.valor_atualizado ?? undefined} /></div>
