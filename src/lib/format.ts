@@ -80,6 +80,28 @@ export const SITUACAO_LABEL: Record<SituacaoVencimento, string> = {
   "NAO SE APLICA": "Não se aplica",
 };
 
+/**
+ * Variante de situacaoVencimento que separa "sem data cadastrada" de "em processo".
+ * (situacaoVencimento continua igual para não afetar outras telas.)
+ */
+export type SituacaoDocumento = SituacaoVencimento | "SEM DATA";
+
+export function situacaoDocumento(
+  dataVencimento?: string | null,
+  statusManual?: string | null,
+  diasAlerta = DIAS_ALERTA_PADRAO,
+): SituacaoDocumento {
+  const manual = (statusManual ?? "").toUpperCase().trim();
+  const ehManual = MANUAIS.includes(manual as SituacaoVencimento) || manual === "NÃO SE APLICA";
+  if (!ehManual && daysUntil(dataVencimento) === null) return "SEM DATA";
+  return situacaoVencimento(dataVencimento, statusManual, diasAlerta);
+}
+
+export const SITUACAO_DOCUMENTO_LABEL: Record<SituacaoDocumento, string> = {
+  ...SITUACAO_LABEL,
+  "SEM DATA": "Sem data cadastrada",
+};
+
 export function parseNumber(value: string): number | null {
   const clean = value.replace(/\s|R\$/g, "").replace(/\./g, "").replace(",", ".");
   if (!clean) return null;
