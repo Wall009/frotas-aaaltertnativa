@@ -4,8 +4,10 @@ import { Database, FileSpreadsheet, IdCard, Pencil, Plus, ShieldCheck, SlidersHo
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AlterarMinhaSenha } from "@/components/alterar-minha-senha";
 import { MotoristaForm } from "@/components/motorista-form";
 import { PageHeader } from "@/components/page-header";
+import { RedefinirSenhaDialog } from "@/components/redefinir-senha-dialog";
 import { ResponsavelForm } from "@/components/responsavel-form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
@@ -51,6 +53,7 @@ function SettingsPage() {
   };
   return <>
     <PageHeader title="Configurações" description="Cadastros auxiliares e regras usadas pelo sistema." />
+    <AlterarMinhaSenha />
     <div className="grid gap-6 lg:grid-cols-3">
       <SettingsCard icon={Database} title="Tipos e opções" description="Documentos, manutenção, sinistros e status." count={data?.cfg.length ?? 0}>{data?.cfg.slice(0,6).map(c => <div key={c.id} className="flex justify-between border-b py-2 last:border-0"><span className="text-sm">{c.valor}</span><StatusBadge value={c.ativo ? "ATIVO" : "INATIVO"} /></div>)}</SettingsCard>
       <SettingsCard icon={SlidersHorizontal} title="Parâmetros" description="Regras gerais e períodos de alerta." count={data?.params.length ?? 0}><div className="space-y-2 border-b py-2"><p className="text-sm font-medium">Prazo de alerta de vencimento</p><p className="mb-2 text-xs text-muted-foreground">Documentos são marcados como "próximo do vencimento" dentro desse prazo.</p><Select value={diasAlertaAtual} onValueChange={salvarDiasAlerta}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="15">15 dias</SelectItem><SelectItem value="30">30 dias</SelectItem><SelectItem value="45">45 dias</SelectItem><SelectItem value="60">60 dias</SelectItem></SelectContent></Select></div>{data?.params.filter(p => p.chave !== "dias_alerta_vencimento").map(p => <div key={p.chave} className="border-b py-2 last:border-0"><p className="text-sm font-medium">{p.chave}</p><p className="text-xs text-muted-foreground">{p.valor}</p></div>)}</SettingsCard>
@@ -124,6 +127,7 @@ function SettingsPage() {
                     <p className="text-sm font-medium">{u.nome || u.email || "—"}</p>
                     <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                   </div>
+                  {u.id !== myProfile?.id && <RedefinirSenhaDialog usuario={{ id: u.id, nome: u.nome, email: u.email }} />}
                   <Select value={u.role} onValueChange={(role) => alterarPapel(u.id, role)} disabled={u.id === myProfile?.id}>
                     <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="admin">Administrador</SelectItem><SelectItem value="operador">Operador</SelectItem></SelectContent>
@@ -133,7 +137,7 @@ function SettingsPage() {
             </ul>
           )}
         </CardContent>
-        <p className="px-6 pb-4 text-xs text-muted-foreground">Administradores podem marcar veículos como vendidos e excluir anexos. Você não pode alterar seu próprio papel.</p>
+        <p className="px-6 pb-4 text-xs text-muted-foreground">Administradores podem marcar veículos como vendidos, excluir anexos e redefinir a senha dos outros usuários (use "Minha senha", acima, para a sua). Você não pode alterar seu próprio papel.</p>
       </Card>
     )}
   </>;

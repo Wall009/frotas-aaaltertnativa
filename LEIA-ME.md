@@ -1,8 +1,7 @@
-# Visual novo + tema claro/escuro
+# Senhas: "Minha senha" + redefinição pelo administrador
 
-Copie a pasta `src/` e `public/` por cima do repositório (mesmos caminhos).
-
-Arquivos novos:  src/hooks/use-theme.ts · src/components/theme-toggle.tsx · public/aa-mark.png (já existia no pacote logo-real)
-Arquivos substituídos: src/styles.css · src/components/app-shell.tsx · src/components/app-sidebar.tsx · src/components/page-header.tsx
-
-Não mexe em dados nem em regras do sistema. Se o repositório já tiver alterações próprias nesses 4 arquivos, mescle em vez de substituir.
+1. Banco: a função `admin_redefinir_senha` JÁ foi aplicada no Lovable Cloud (arquivo em supabase/migrations só para o histórico do repositório).
+2. Copie `src/` por cima do repositório:
+   - novos: components/redefinir-senha-dialog.tsx, components/alterar-minha-senha.tsx
+   - substituído: routes/_authenticated/_app/configuracoes.tsx (base: versão do pacote-final; se você alterou esse arquivo depois, mescle)
+3. Em Configurações: card "Minha senha" (todos) e, na lista de Usuários (só admin), botão de chave para redefinir a senha de cada um.
