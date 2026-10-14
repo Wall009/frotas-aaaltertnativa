@@ -1,7 +1,11 @@
-# Senhas: "Minha senha" + redefinição pelo administrador
+# Valores em Multas e Sinistros
 
-1. Banco: a função `admin_redefinir_senha` JÁ foi aplicada no Lovable Cloud (arquivo em supabase/migrations só para o histórico do repositório).
-2. Copie `src/` por cima do repositório:
-   - novos: components/redefinir-senha-dialog.tsx, components/alterar-minha-senha.tsx
-   - substituído: routes/_authenticated/_app/configuracoes.tsx (base: versão do pacote-final; se você alterou esse arquivo depois, mescle)
-3. Em Configurações: card "Minha senha" (todos) e, na lista de Usuários (só admin), botão de chave para redefinir a senha de cada um.
+Banco: as colunas novas JÁ foram criadas no Lovable Cloud (o .sql em supabase/migrations é só histórico).
+Copie `src/` por cima do repositório:
+
+Novos:        src/lib/valores.ts · src/lib/sinistro-valores.ts
+Substituídos: src/routes/_authenticated/_app/multas.index.tsx · multas.$multaId.tsx · sinistros.index.tsx · sinistros.$sinistroId.tsx
+              src/integrations/supabase/types.ts (inclui as 5 colunas novas; se o seu types.ts for mais novo, só acrescente as colunas)
+
+Multas:    "Quem paga" (Empresa/Motorista) + motivo (só Empresa) + valor, na aba Pagamento; colunas e totais na lista.
+Sinistros: cartões de resumo no topo, aba "Valores" e colunas "Valor a pagar (franquia)" e "Total do prejuízo" na lista.

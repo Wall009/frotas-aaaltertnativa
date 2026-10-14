@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ClipboardList, Plus, ScrollText, UserRound } from "lucide-react";
+import { Banknote, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataPage, type DataColumn } from "@/components/data-page";
@@ -11,6 +12,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { diasRestantes, formatCurrency, formatDate, STATUS_MULTA_LABEL, SITUACAO_CONDUTOR_LABEL } from "@/lib/format";
+import { MOTIVO_CUSTO_EMPRESA_LABEL, multaConta, PAGADOR_LABEL, soma } from "@/lib/valores";
 import type { Row } from "@/lib/db";
 
 type MultaRow = Row<"multas"> & { veiculos: { placa: string } | null };
@@ -35,6 +37,8 @@ function FinesPage() {
     { label: "Data", value: r => formatDate(r.data_infracao) },
     { label: "Infração", value: r => r.descricao_infracao || r.enquadramento || "—" },
     { label: "Condutor", value: r => SITUACAO_CONDUTOR_LABEL[r.situacao_condutor] ?? r.situacao_condutor },
+    { label: "Valor da multa", value: r => formatCurrency(r.valor_atualizado ?? r.valor_original) },
+    { label: "Quem paga", value: r => r.pagador ? <span title={r.motivo_custo_empresa ? MOTIVO_CUSTO_EMPRESA_LABEL[r.motivo_custo_empresa] : undefined}>{PAGADOR_LABEL[r.pagador] ?? r.pagador}{r.valor_pagador != null ? ` · ${formatCurrency(r.valor_pagador)}` : ""}</span> : <span className="text-muted-foreground">Não definido</span> },
     { label: "Status", value: r => <StatusBadge value={STATUS_MULTA_LABEL[r.status] ?? r.status} /> },
   ];
   const indicacaoCols: DataColumn<MultaRow>[] = [
@@ -47,6 +51,7 @@ function FinesPage() {
     { label: "Placa", value: r => r.veiculos?.placa || "—" },
     { label: "Auto", value: r => r.numero_auto || "—" },
     { label: "Valor atualizado", value: r => formatCurrency(r.valor_atualizado ?? r.valor_original) },
+    { label: "Quem paga", value: r => r.pagador ? `${PAGADOR_LABEL[r.pagador] ?? r.pagador}${r.valor_pagador != null ? ` · ${formatCurrency(r.valor_pagador)}` : ""}` : "Não definido" },
     { label: "Vencimento", value: r => formatDate(r.data_vencimento) },
     { label: "Status", value: r => <StatusBadge value={STATUS_MULTA_LABEL[r.status] ?? r.status} /> },
   ];
@@ -57,6 +62,10 @@ function FinesPage() {
     { label: "Status", value: r => <StatusBadge value={STATUS_MULTA_LABEL[r.status] ?? r.status} /> },
   ];
 
+  const contam = useMemo(() => data.filter(m => multaConta(m.status)), [data]);
+  const custoEmpresa = soma(contam.filter(m => m.pagador === "EMPRESA").map(m => m.valor_pagador ?? m.valor_atualizado ?? m.valor_original));
+  const custoMotorista = soma(contam.filter(m => m.pagador === "MOTORISTA").map(m => m.valor_pagador ?? m.valor_atualizado ?? m.valor_original));
+  const semResponsavel = contam.filter(m => !m.pagador).length;
   const cards = [
     ["Total", data.length, ClipboardList, "text-primary bg-primary/10"],
     ["Pendentes", pendentes.length, AlertTriangle, "text-warning-foreground bg-warning/20"],
@@ -72,6 +81,16 @@ function FinesPage() {
           <CardContent className="flex items-center justify-between p-5">
             <div><p className="text-sm font-medium text-muted-foreground">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div>
             <span className={`flex size-10 items-center justify-center rounded-md ${tone}`}><Icon className="size-5" /></span>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+    <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {([["Custo da empresa", formatCurrency(custoEmpresa), "Multas sem culpa do motorista (manutenção, segurança, operação)", Banknote, "text-primary bg-primary/10"], ["A cobrar dos motoristas", formatCurrency(custoMotorista), "Multas com indicação e pagamento pelo motorista", HandCoins, "text-info bg-info/10"], ["Sem responsável definido", String(semResponsavel), "Defina quem paga dentro de cada multa", AlertTriangle, "text-warning-foreground bg-warning/20"]] as const).map(([label, value, hint, Icon, tone]) => (
+        <Card key={label} className="rounded-lg shadow-card">
+          <CardContent className="flex items-center justify-between gap-3 p-5">
+            <div className="min-w-0"><p className="text-sm font-medium text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold">{value}</p><p className="mt-1 text-xs text-muted-foreground">{hint}</p></div>
+            <span className={`flex size-10 shrink-0 items-center justify-center rounded-md ${tone}`}><Icon className="size-5" /></span>
           </CardContent>
         </Card>
       ))}

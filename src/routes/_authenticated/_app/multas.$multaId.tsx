@@ -15,6 +15,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { MOTIVO_CUSTO_EMPRESA_LABEL, PAGADOR_LABEL } from "@/lib/valores";
 import { diasRestantes, formatCurrency, formatDate, formatDateTime, STATUS_MULTA_LABEL, SITUACAO_CONDUTOR_LABEL } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/_app/multas/$multaId")({ head: () => ({ meta: [{ title: "Multa — Controle de Frota" }, { name: "description", content: "Detalhes da multa, condutor, pagamento e recurso." }] }), component: FineDetail });
@@ -67,6 +68,23 @@ function FineDetail() {
     if (payload.data_indicacao) await supabase.from("multa_timeline").insert({ multa_id: multaId, evento: "Indicação de condutor realizada", detalhe: payload.protocolo_indicacao ? `Protocolo ${payload.protocolo_indicacao}` : null });
     else if (motoristaId) await supabase.from("multa_timeline").insert({ multa_id: multaId, evento: "Condutor identificado" });
     toast.success("Condutor atualizado");
+    await refresh();
+  };
+
+  const [pagador, setPagador] = useState<string | null>(null);
+  const [savingResp, setSavingResp] = useState(false);
+  const salvarResponsavel = async (formData: FormData) => {
+    setSavingResp(true);
+    const escolhido = String(formData.get("pagador") ?? "") || null;
+    const motivo = escolhido === "EMPRESA" ? String(formData.get("motivo_custo_empresa") ?? "") || null : null;
+    const bruto = String(formData.get("valor_pagador") ?? "").trim();
+    const valor = bruto ? Number(bruto.replace(",", ".")) : null;
+    if (escolhido === "EMPRESA" && !motivo) { setSavingResp(false); toast.error("Informe o motivo do custo da empresa."); return; }
+    const { error } = await supabase.from("multas").update({ pagador: escolhido, motivo_custo_empresa: motivo, valor_pagador: valor }).eq("id", multaId);
+    if (!error) await supabase.from("multa_timeline").insert({ multa_id: multaId, evento: "Responsável pelo pagamento definido", detalhe: escolhido ? `${PAGADOR_LABEL[escolhido]}${motivo ? ` · ${MOTIVO_CUSTO_EMPRESA_LABEL[motivo]}` : ""}${valor != null ? ` · ${formatCurrency(valor)}` : ""}` : "Sem responsável" });
+    setSavingResp(false);
+    if (error) { toast.error("Não foi possível salvar", { description: error.message }); return; }
+    toast.success("Responsável pelo pagamento salvo");
     await refresh();
   };
 
@@ -132,10 +150,11 @@ function FineDetail() {
       </>}
     />
 
-    <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <InfoCard label="Auto de infração" value={m.numero_auto || "—"} />
       <InfoCard label="Data / hora" value={`${formatDate(m.data_infracao)}${m.hora_infracao ? " · " + m.hora_infracao.slice(0, 5) : ""}`} />
       <InfoCard label="Valor atualizado" value={formatCurrency(m.valor_atualizado ?? m.valor_original)} />
+      <InfoCard label="Quem paga" value={m.pagador ? `${PAGADOR_LABEL[m.pagador] ?? m.pagador}${m.motivo_custo_empresa ? ` · ${MOTIVO_CUSTO_EMPRESA_LABEL[m.motivo_custo_empresa]}` : ""}` : "Não definido"} />
       <InfoCard label="Condutor" value={<StatusBadge value={SITUACAO_CONDUTOR_LABEL[m.situacao_condutor] ?? m.situacao_condutor} />} />
     </div>
 
@@ -188,6 +207,30 @@ function FineDetail() {
 
       <TabsContent value="pagamento">
         <div className="space-y-4">
+          <Card className="rounded-lg"><CardContent className="p-6">
+            <p className="mb-1 text-sm font-semibold">Quem paga esta multa</p>
+            <p className="mb-4 text-xs text-muted-foreground">Empresa: quando a causa foi operacional (manutenção, equipamento de segurança, documentação, rota). Motorista: quando houve indicação e ele arca com o valor.</p>
+            <form key={`${m.pagador}-${m.motivo_custo_empresa}-${m.valor_pagador}`} action={salvarResponsavel} className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="pagador">Responsável pelo pagamento</Label>
+                <Select name="pagador" defaultValue={m.pagador ?? ""} onValueChange={setPagador}>
+                  <SelectTrigger id="pagador"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent><SelectItem value="EMPRESA">Empresa (custo da empresa)</SelectItem><SelectItem value="MOTORISTA">Motorista</SelectItem></SelectContent>
+                </Select>
+              </div>
+              {(pagador ?? m.pagador) === "EMPRESA" && (
+                <div className="space-y-2">
+                  <Label htmlFor="motivo_custo_empresa">Motivo do custo da empresa *</Label>
+                  <Select name="motivo_custo_empresa" defaultValue={m.motivo_custo_empresa ?? ""}>
+                    <SelectTrigger id="motivo_custo_empresa"><SelectValue placeholder="Selecione o motivo" /></SelectTrigger>
+                    <SelectContent>{Object.entries(MOTIVO_CUSTO_EMPRESA_LABEL).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-2"><Label htmlFor="valor_pagador">Valor a pagar pelo responsável</Label><Input id="valor_pagador" name="valor_pagador" type="number" step="0.01" defaultValue={m.valor_pagador ?? m.valor_atualizado ?? m.valor_original ?? undefined} /></div>
+              <div className="sm:col-span-3"><Button type="submit" disabled={savingResp}>{savingResp ? "Salvando…" : "Salvar responsável"}</Button></div>
+            </form>
+          </CardContent></Card>
           <Card className="rounded-lg"><CardContent className="p-6">
             <form action={registrarPagamento} className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2"><Label htmlFor="valor_original">Valor da multa</Label><Input id="valor_original" name="valor_original" type="number" step="0.01" defaultValue={m.valor_atualizado ?? m.valor_original ?? undefined} /></div>

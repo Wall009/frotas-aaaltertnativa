@@ -407,6 +407,9 @@ export type Database = {
           uf: string | null
           updated_at: string
           valor_atualizado: number | null
+          pagador: string | null
+          motivo_custo_empresa: string | null
+          valor_pagador: number | null
           valor_original: number | null
           veiculo_id: string | null
           termo_assinado: boolean
@@ -446,6 +449,9 @@ export type Database = {
           uf?: string | null
           updated_at?: string
           valor_atualizado?: number | null
+          pagador?: string | null
+          motivo_custo_empresa?: string | null
+          valor_pagador?: number | null
           valor_original?: number | null
           veiculo_id?: string | null
           termo_assinado?: boolean
@@ -485,6 +491,9 @@ export type Database = {
           uf?: string | null
           updated_at?: string
           valor_atualizado?: number | null
+          pagador?: string | null
+          motivo_custo_empresa?: string | null
+          valor_pagador?: number | null
           valor_original?: number | null
           veiculo_id?: string | null
           termo_assinado?: boolean
@@ -851,6 +860,8 @@ export type Database = {
           franquia_seguro: boolean | null
           valor_estimado_inicial: number | null
           valor_comprovado: number | null
+          valor_pago_seguradora: number | null
+          valor_dano_carga: number | null
           discriminacao_prejuizo: string | null
           data_notificacao_defesa: string | null
           prazo_defesa_concedido: boolean | null
@@ -935,6 +946,8 @@ export type Database = {
           franquia_seguro?: boolean | null
           valor_estimado_inicial?: number | null
           valor_comprovado?: number | null
+          valor_pago_seguradora?: number | null
+          valor_dano_carga?: number | null
           discriminacao_prejuizo?: string | null
           data_notificacao_defesa?: string | null
           prazo_defesa_concedido?: boolean | null
@@ -1019,6 +1032,8 @@ export type Database = {
           franquia_seguro?: boolean | null
           valor_estimado_inicial?: number | null
           valor_comprovado?: number | null
+          valor_pago_seguradora?: number | null
+          valor_dano_carga?: number | null
           discriminacao_prejuizo?: string | null
           data_notificacao_defesa?: string | null
           prazo_defesa_concedido?: boolean | null

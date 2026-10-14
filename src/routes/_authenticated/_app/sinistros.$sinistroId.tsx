@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
+import { totalPrejuizo, valorReparo } from "@/lib/sinistro-valores";
 
 export const Route = createFileRoute("/_authenticated/_app/sinistros/$sinistroId")({ head: () => ({ meta: [{ title: "Sinistro — Controle de Frota" }, { name: "description", content: "Apuração, seguro, terceiro e documentos do sinistro." }] }), component: SinistroDetail });
 
@@ -63,6 +64,10 @@ function SinistroDetail() {
   const text = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim() || null;
   const num = (fd: FormData, key: string) => { const v = text(fd, key); return v ? Number(v.replace(",", ".")) : null; };
   const bool = (fd: FormData, key: string) => fd.get(key) === "on";
+
+  const salvarValores = async (formData: FormData) => saveSection("Valores")(formData, fd => ({
+    valor_pago_seguradora: num(fd, "valor_pago_seguradora"), valor_dano_carga: num(fd, "valor_dano_carga"),
+  }));
 
   const salvarOcorrencia = async (formData: FormData) => saveSection("Ocorrência")(formData, fd => ({
     numero_roo: text(fd, "numero_roo"), unidade_filial: text(fd, "unidade_filial"), setor_responsavel: text(fd, "setor_responsavel"),
@@ -120,10 +125,18 @@ function SinistroDetail() {
       </>}
     />
 
+    <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ResumoValor destaque label="Valor a pagar (franquia)" value={formatCurrency(s.franquia)} />
+      <ResumoValor label="Total do prejuízo" value={formatCurrency(totalPrejuizo(s))} />
+      <ResumoValor label="Pago pela seguradora" value={formatCurrency(s.valor_pago_seguradora)} />
+      <ResumoValor label="Cobrado do motorista" value={formatCurrency(s.valor_ressarcimento)} />
+    </div>
+
     <Tabs defaultValue="ocorrencia">
       <div className="overflow-x-auto"><TabsList className="h-auto w-max min-w-full justify-start">
         <TabsTrigger className="h-10 shrink-0" value="ocorrencia">Ocorrência</TabsTrigger>
         <TabsTrigger className="h-10 shrink-0" value="apuracao">Apuração</TabsTrigger>
+        <TabsTrigger className="h-10 shrink-0" value="valores">Valores</TabsTrigger>
         <TabsTrigger className="h-10 shrink-0" value="seguro">Seguro &amp; Reparo</TabsTrigger>
         <TabsTrigger className="h-10 shrink-0" value="terceiro">Terceiro &amp; Quitação</TabsTrigger>
         <TabsTrigger className="h-10 shrink-0" value="documentos">Documentos</TabsTrigger>
@@ -254,6 +267,41 @@ function SinistroDetail() {
             <Button type="submit">Salvar apuração</Button>
           </form>
         </CardContent></Card>
+      </TabsContent>
+
+      {/* VALORES */}
+      <TabsContent value="valores">
+        <div className="space-y-4">
+          <Card className="rounded-lg"><CardContent className="p-0">
+            <div className="border-b p-4"><p className="text-sm font-semibold">Resumo dos valores do sinistro</p><p className="text-xs text-muted-foreground">O valor a pagar pela empresa é a franquia do seguro. Os demais valores ajudam a entender o tamanho do prejuízo e quem arca com ele.</p></div>
+            <div className="divide-y">
+              {([
+                ["Franquia — valor a pagar pela empresa", s.franquia, "Seguro & Reparo"],
+                ["Pago pela seguradora", s.valor_pago_seguradora, "Valores (abaixo)"],
+                ["Reparo na oficina (final › aprovado › orçamento)", valorReparo(s), "Seguro & Reparo"],
+                ["Indenização a terceiros (valor do acordo)", s.quitacao_valor, "Terceiro & Quitação"],
+                ["Danos à carga", s.valor_dano_carga, "Valores (abaixo)"],
+                ["Ressarcimento cobrado do motorista", s.valor_ressarcimento, "Apuração"],
+              ] as const).map(([label, valor, onde]) => (
+                <div key={label} className="flex items-center justify-between gap-4 px-4 py-3">
+                  <div className="min-w-0"><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted-foreground">Preenchido em: {onde}</p></div>
+                  <p className="shrink-0 text-sm font-semibold tabular-nums">{formatCurrency(valor)}</p>
+                </div>
+              ))}
+              <div className="flex items-center justify-between gap-4 bg-muted/40 px-4 py-3">
+                <div><p className="text-sm font-semibold">Total do prejuízo</p><p className="text-xs text-muted-foreground">Reparo + indenização a terceiros + danos à carga</p></div>
+                <p className="text-base font-bold tabular-nums">{formatCurrency(totalPrejuizo(s))}</p>
+              </div>
+            </div>
+          </CardContent></Card>
+          <Card className="rounded-lg"><CardContent className="p-6">
+            <form key={`${s.valor_pago_seguradora}-${s.valor_dano_carga}`} action={salvarValores} className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2"><Label htmlFor="valor_pago_seguradora">Valor pago pela seguradora</Label><Input id="valor_pago_seguradora" name="valor_pago_seguradora" type="number" step="0.01" defaultValue={s.valor_pago_seguradora ?? undefined} /></div>
+              <div className="space-y-2"><Label htmlFor="valor_dano_carga">Danos à carga</Label><Input id="valor_dano_carga" name="valor_dano_carga" type="number" step="0.01" defaultValue={s.valor_dano_carga ?? undefined} /></div>
+              <div className="sm:col-span-2"><Button type="submit">Salvar valores</Button></div>
+            </form>
+          </CardContent></Card>
+        </div>
       </TabsContent>
 
       {/* SEGURO & REPARO */}
@@ -428,6 +476,10 @@ function QuitacaoPrintView({ s }: { s: any }) {
       </CardContent></Card>
     </div>
   );
+}
+
+function ResumoValor({ label, value, destaque }: { label: string; value: React.ReactNode; destaque?: boolean }) {
+  return <Card className={`rounded-lg shadow-card ${destaque ? "border-primary/40" : ""}`}><CardContent className="p-4"><p className="text-xs font-medium uppercase text-muted-foreground">{label}</p><p className={`mt-1 text-xl font-bold tabular-nums ${destaque ? "text-primary" : ""}`}>{value}</p></CardContent></Card>;
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
